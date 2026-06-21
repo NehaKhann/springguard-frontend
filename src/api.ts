@@ -1,8 +1,11 @@
 import type { ScanReport } from './types'
 
-// Calls the backend through Vite's dev proxy (/api -> http://localhost:8080).
+// In local dev, VITE_API_BASE is empty and the call goes to /api (Vite proxies to :8080).
+// In production (Vercel), set VITE_API_BASE to your deployed backend URL.
+const base = (import.meta as any).env?.VITE_API_BASE ?? ''
+
 export async function scanCode(code: string): Promise<ScanReport> {
-  const res = await fetch('/api/scan', {
+  const res = await fetch(`${base}/api/scan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code }),
