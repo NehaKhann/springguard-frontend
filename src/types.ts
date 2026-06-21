@@ -16,3 +16,17 @@ export interface ScanReport {
   status: 'ANALYZED' | 'EMPTY' | 'NOT_SPRING' | 'TOO_LARGE'
   message: string | null
 }
+
+export interface AuthResponse {
+  token: string
+  email: string
+}
+
+export interface ScanRecordResponse {
+  id: number
+  grade: string
+  score: number
+  summary: string
+  createdAt: string
+  findings: Finding[]
+}

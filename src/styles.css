@@ -186,3 +186,70 @@ body {
   font-size: 14px;
   line-height: 1.55;
 }
+
+/* Auth bar in header */
+.authbar { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.authwho { color: var(--mute); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.linkbtn {
+  background: transparent; border: 1px solid var(--line); color: var(--ink);
+  border-radius: 9px; padding: 7px 14px; font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.linkbtn:hover { border-color: var(--accent); }
+
+/* Auth panel */
+.authpanel {
+  margin-top: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel); max-width: 420px; display: flex; flex-direction: column; gap: 10px;
+}
+.authtabs { display: flex; gap: 8px; margin-bottom: 4px; }
+.authtabs button {
+  flex: 1; background: transparent; border: 1px solid var(--line); color: var(--mute);
+  border-radius: 9px; padding: 9px; cursor: pointer; font-family: inherit; font-size: 13.5px;
+}
+.authtabs button.on { color: var(--ink); border-color: var(--accent); background: rgba(91,141,239,0.08); }
+.authinput {
+  background: var(--bg); border: 1px solid var(--line); color: var(--ink);
+  border-radius: 9px; padding: 11px 13px; font-family: inherit; font-size: 14px; outline: none;
+}
+.authinput:focus { border-color: var(--accent); }
+.authsubmit {
+  border: none; border-radius: 9px; background: linear-gradient(180deg, #6E9BF2, var(--accent));
+  color: #fff; font-weight: 600; font-size: 14px; padding: 11px; cursor: pointer; font-family: inherit;
+}
+.authsubmit:disabled { opacity: 0.5; cursor: not-allowed; }
+.autherror { color: var(--amber); font-size: 13px; }
+
+/* Save button */
+.savebtn {
+  margin-top: 12px; border: none; border-radius: 9px;
+  background: var(--green); color: #fff; font-weight: 600; font-size: 13px;
+  padding: 9px 16px; cursor: pointer; font-family: inherit;
+}
+.savebtn.ghost { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+.savebtn:disabled { opacity: 0.6; cursor: default; }
+
+/* History */
+.historysection { margin-top: 26px; }
+.history { display: flex; flex-direction: column; gap: 9px; }
+.histrow {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 12px 16px;
+}
+.histgrade { font-size: 30px; font-weight: 700; width: 40px; text-align: center; }
+.histbody { flex: 1; min-width: 0; }
+.histsummary { font-size: 14px; }
+.histdate { color: var(--mute); font-size: 12px; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.histscore { color: var(--mute); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+
+.histcard { display: flex; flex-direction: column; }
+.histrow {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 12px 16px;
+  cursor: pointer; font-family: inherit; color: var(--ink);
+}
+.histrow:hover { border-color: var(--accent); }
+.histchevron { color: var(--mute); font-family: 'JetBrains Mono', monospace; font-size: 18px; width: 16px; text-align: center; }
+.histfindings {
+  display: flex; flex-direction: column; gap: 9px;
+  padding: 12px 6px 4px 6px;
+}
