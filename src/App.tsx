@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { scanCode, saveScan, listScans } from './api'
+import { scanCode, saveScan, listScans, deleteScan } from './api'
 import type { ScanReport, Severity, AuthResponse, ScanRecordResponse } from './types'
 import AuthPanel from './AuthPanel'
 import HistoryPanel from './HistoryPanel'
@@ -44,6 +44,10 @@ export default function App() {
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
 
   const analyzed = report && report.status === 'ANALYZED'
+  const aiFindings = report ? report.findings.filter((f) => f.source === 'AI') : []
+  const aiHigh = aiFindings.filter((f) => f.severity === 'HIGH').length
+  const aiMed = aiFindings.filter((f) => f.severity === 'MEDIUM').length
+  const aiLow = aiFindings.filter((f) => f.severity === 'LOW').length
 
   function onAuth(res: AuthResponse) {
     setToken(res.token)
@@ -51,6 +55,11 @@ export default function App() {
     localStorage.setItem('sg_token', res.token)
     localStorage.setItem('sg_email', res.email)
     setShowAuth(false)
+    // fresh slate on sign-in (consistent with sign-out)
+    setReport(null)
+    setError(null)
+    setSaved(false)
+    setSaveMsg(null)
   }
   function signOut() {
     setToken(null)
@@ -68,6 +77,15 @@ export default function App() {
   async function refreshHistory() {
     if (!token) return
     try { setHistory(await listScans(token)) } catch { /* ignore */ }
+  }
+
+  async function handleDelete(id: number) {
+    if (!token) return
+    if (!window.confirm('Delete this scan from your history?')) return
+    try {
+      await deleteScan(token, id)
+      refreshHistory()
+    } catch { /* ignore */ }
   }
   useEffect(() => { refreshHistory() /* eslint-disable-next-line */ }, [token])
 
@@ -137,29 +155,46 @@ export default function App() {
           {!report && !error && !loading && (
             <div className="empty"><p>Run a scan to see the security grade and findings.</p></div>
           )}
-          {loading && <div className="empty"><p>Analysing your code\u2026</p></div>}
+          {loading && <div className="empty"><p>Analysing your code…</p></div>}
           {error && <div className="error">{error}</div>}
           {report && !analyzed && <div className="notice">{report.message}</div>}
 
           {analyzed && report && (
             <div className="report">
-              <div className="gradecard">
-                <div className="grade" style={{ color: GRADE_COLOR[report.grade] || 'var(--amber)' }}>
-                  {report.grade}
+              <div className="scorecards">
+                <div className="gradecard">
+                  <div className="grade" style={{ color: GRADE_COLOR[report.grade] || 'var(--amber)' }}>
+                    {report.grade}
+                  </div>
+                  <div className="gradeinfo">
+                    <div className="cardlabel">Rule grade</div>
+                    <div className="score">Score <strong>{report.score}</strong><span>/100</span></div>
+                    <div className="summary">{report.summary}</div>
+                    {email ? (
+                      <button className="savebtn" onClick={saveCurrent} disabled={saved}>
+                        {saved ? 'Saved \u2713' : 'Save to history'}
+                      </button>
+                    ) : (
+                      <button className="savebtn ghost" onClick={() => setShowAuth(true)}>
+                        Sign in to save
+                      </button>
+                    )}
+                    {saveMsg && <div className="autherror">{saveMsg}</div>}
+                  </div>
                 </div>
-                <div className="gradeinfo">
-                  <div className="score">Security score <strong>{report.score}</strong><span>/100</span></div>
-                  <div className="summary">{report.summary}</div>
-                  {email ? (
-                    <button className="savebtn" onClick={saveCurrent} disabled={saved}>
-                      {saved ? 'Saved \u2713' : 'Save to history'}
-                    </button>
-                  ) : (
-                    <button className="savebtn ghost" onClick={() => setShowAuth(true)}>
-                      Sign in to save
-                    </button>
-                  )}
-                  {saveMsg && <div className="autherror">{saveMsg}</div>}
+
+                <div className="aicard">
+                  <div className="ai-emblem">AI</div>
+                  <div>
+                    <div className="cardlabel ai">AI review</div>
+                    <div className="ai-count">
+                      {aiFindings.length === 0 ? 'No additional concerns' : `${aiFindings.length} concern${aiFindings.length === 1 ? '' : 's'} found`}
+                    </div>
+                    {aiFindings.length > 0 && (
+                      <div className="ai-breakdown">{aiHigh} high · {aiMed} medium · {aiLow} low</div>
+                    )}
+                    <div className="ai-note">Context-aware review. Advisory — doesn't change the rule grade.</div>
+                  </div>
                 </div>
               </div>
 
@@ -171,6 +206,7 @@ export default function App() {
                   <article key={f.id} className={`finding sev-${f.severity.toLowerCase()}`}>
                     <header className="finding-head">
                       <span className="sev-badge">{SEV_LABEL[f.severity]}</span>
+                      {f.source === 'AI' && <span className="ai-badge">AI review</span>}
                       <h3 className="finding-title">{f.title}</h3>
                     </header>
                     <p className="finding-why">{f.why}</p>
@@ -186,7 +222,7 @@ export default function App() {
       {email && (
         <section className="historysection">
           <div className="pane-label">Your scan history</div>
-          <HistoryPanel items={history} />
+          <HistoryPanel items={history} onDelete={handleDelete} />
         </section>
       )}
 

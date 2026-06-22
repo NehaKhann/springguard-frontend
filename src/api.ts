@@ -61,3 +61,11 @@ export async function listScans(token: string): Promise<ScanRecordResponse[]> {
   if (!res.ok) throw new Error(await readError(res, 'Could not load your history.'))
   return res.json() as Promise<ScanRecordResponse[]>
 }
+
+export async function deleteScan(token: string, id: number): Promise<void> {
+  const res = await fetch(`${base}/api/scans/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await readError(res, 'Could not delete this scan.'))
+}

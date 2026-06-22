@@ -6,6 +6,7 @@ export interface Finding {
   title: string
   why: string
   fix: string
+  source?: 'RULE' | 'AI'
 }
 
 export interface ScanReport {
