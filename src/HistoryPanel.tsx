@@ -50,6 +50,7 @@ export default function HistoryPanel({
                       {f.source === 'AI' && <span className="ai-badge">AI review</span>}
                       <h3 className="finding-title">{f.title}</h3>
                     </header>
+                    {f.file && <div className="file-tag">{f.file}</div>}
                     <p className="finding-why">{f.why}</p>
                     <p className="finding-fix"><span>Fix</span> {f.fix}</p>
                   </article>

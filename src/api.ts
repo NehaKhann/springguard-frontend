@@ -21,6 +21,16 @@ export async function scanCode(code: string): Promise<ScanReport> {
   return res.json() as Promise<ScanReport>
 }
 
+export async function scanRepo(repoUrl: string, token?: string, branch?: string): Promise<ScanReport> {
+  const res = await fetch(`${base}/api/scan-repo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repoUrl, token: token ?? null, branch: branch ?? null }),
+  })
+  if (!res.ok) throw new Error(`The scanner responded with ${res.status}.`)
+  return res.json() as Promise<ScanReport>
+}
+
 export async function registerUser(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${base}/api/auth/register`, {
     method: 'POST',

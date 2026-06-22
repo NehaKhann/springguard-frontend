@@ -7,6 +7,7 @@ export interface Finding {
   why: string
   fix: string
   source?: 'RULE' | 'AI'
+  file?: string | null
 }
 
 export interface ScanReport {
@@ -14,8 +15,10 @@ export interface ScanReport {
   grade: string
   summary: string
   findings: Finding[]
-  status: 'ANALYZED' | 'EMPTY' | 'NOT_SPRING' | 'TOO_LARGE'
+  status: 'ANALYZED' | 'EMPTY' | 'NOT_SPRING' | 'TOO_LARGE' | 'BAD_URL' | 'NO_FILES' | 'BRANCH_NOT_FOUND' | 'ERROR'
   message: string | null
+  filesScanned?: number
+  target?: string | null
 }
 
 export interface AuthResponse {
