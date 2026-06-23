@@ -1,4 +1,4 @@
-import type { ScanReport, AuthResponse, ScanRecordResponse, Finding } from './types'
+import type { ScanReport, AuthResponse, ScanRecordResponse, Finding, FixResponse } from './types'
 
 const base = (import.meta as any).env?.VITE_API_BASE ?? ''
 
@@ -78,4 +78,14 @@ export async function deleteScan(token: string, id: number): Promise<void> {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(await readError(res, 'Could not delete this scan.'))
+}
+
+export async function fixCode(code: string): Promise<FixResponse> {
+  const res = await fetch(`${base}/api/fix`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  })
+  if (!res.ok) throw new Error(`The fixer responded with ${res.status}.`)
+  return res.json() as Promise<FixResponse>
 }

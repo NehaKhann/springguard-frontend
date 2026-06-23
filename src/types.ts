@@ -34,3 +34,9 @@ export interface ScanRecordResponse {
   createdAt: string
   findings: Finding[]
 }
+
+export interface FixResponse {
+  status: 'OK' | 'AI_OFF' | 'ERROR'
+  message: string | null
+  fixedCode: string | null
+}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { scanCode, scanRepo, saveScan, listScans, deleteScan } from './api'
+import { scanCode, scanRepo, saveScan, listScans, deleteScan, fixCode } from './api'
 import type { ScanReport, Severity, AuthResponse, ScanRecordResponse } from './types'
 import HistoryPanel from './HistoryPanel'
 import Landing from './Landing'
+import DiffView from './DiffView'
 
 const SAMPLE = `// SecurityConfig.java + application.properties (sample)
 http
@@ -50,6 +51,9 @@ export default function App() {
   const [history, setHistory] = useState<ScanRecordResponse[]>([])
   const [saved, setSaved] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [fixedCode, setFixedCode] = useState<string | null>(null)
+  const [fixing, setFixing] = useState(false)
+  const [fixMsg, setFixMsg] = useState<string | null>(null)
 
   const analyzed = report && report.status === 'ANALYZED'
   const aiFindings = report ? report.findings.filter((f) => f.source === 'AI') : []
@@ -97,6 +101,7 @@ export default function App() {
 
   function beforeScan() {
     setLoading(true); setError(null); setReport(null); setSaved(false); setSaveMsg(null)
+    setFixedCode(null); setFixMsg(null)
   }
 
   async function runScan() {
@@ -133,6 +138,26 @@ export default function App() {
     } catch (e) {
       setSaveMsg(e instanceof Error ? e.message : 'Could not save this scan.')
     }
+  }
+
+  async function runFix() {
+    setFixing(true); setFixMsg(null); setFixedCode(null)
+    try {
+      const res = await fixCode(code)
+      if (res.status === 'OK' && res.fixedCode) {
+        setFixedCode(res.fixedCode)
+      } else {
+        setFixMsg(res.message || 'Could not generate a fix.')
+      }
+    } catch {
+      setFixMsg("Couldn't reach the fixer. Please try again.")
+    } finally {
+      setFixing(false)
+    }
+  }
+
+  function applyFix() {
+    if (fixedCode) { setCode(fixedCode); setFixedCode(null); setReport(null); setFixMsg(null) }
   }
 
   function buildReportMarkdown(r: ScanReport): string {
@@ -353,7 +378,7 @@ export default function App() {
                       {aiFindings.length > 0 && (
                         <div className="ai-breakdown">{aiHigh} high · {aiMed} medium · {aiLow} low</div>
                       )}
-                      <div className="ai-note">Context-aware review. Advisory — doesn't change the rule grade.</div>
+                      <div className="ai-note">Advisory — doesn't change the grade. Deeper logic risks can persist after a fix, since they often need app-specific changes.</div>
                     </div>
                   </div>
                 )}
@@ -376,6 +401,30 @@ export default function App() {
                   </article>
                 ))}
               </div>
+
+              {reportMode === 'code' && report.findings.length > 0 && (
+                <div className="fixpanel">
+                  <div className="fixpanel-head">
+                    <div>
+                      <div className="cardlabel ai">AI auto-fix</div>
+                      <div className="fixpanel-sub">Let AI rewrite this file with the issues fixed, then review the diff.</div>
+                    </div>
+                    <button className="scan-btn fixbtn" onClick={runFix} disabled={fixing}>
+                      {fixing ? 'Fixing…' : 'Fix with AI'}
+                    </button>
+                  </div>
+                  {fixMsg && <div className="notice">{fixMsg}</div>}
+                  {fixedCode && (
+                    <>
+                      <DiffView original={code} fixed={fixedCode} />
+                      <div className="fixactions">
+                        <button className="savebtn" onClick={applyFix}>Apply fix to editor</button>
+                        <button className="downloadbtn" onClick={() => navigator.clipboard.writeText(fixedCode)}>Copy fixed code</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </section>
