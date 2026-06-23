@@ -1,4 +1,4 @@
-import type { ScanReport, AuthResponse, ScanRecordResponse, Finding, FixResponse } from './types'
+import type { ScanReport, AuthResponse, ScanRecordResponse, Finding, FixResponse, RepoFileFixResponse } from './types'
 
 const base = (import.meta as any).env?.VITE_API_BASE ?? ''
 
@@ -88,4 +88,16 @@ export async function fixCode(code: string): Promise<FixResponse> {
   })
   if (!res.ok) throw new Error(`The fixer responded with ${res.status}.`)
   return res.json() as Promise<FixResponse>
+}
+
+export async function fixRepoFile(
+  repoUrl: string, token: string, branch: string, path: string,
+): Promise<RepoFileFixResponse> {
+  const res = await fetch(`${base}/api/fix-repo-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repoUrl, token, branch, path }),
+  })
+  if (!res.ok) throw new Error(`The fixer responded with ${res.status}.`)
+  return res.json() as Promise<RepoFileFixResponse>
 }

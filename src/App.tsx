@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { scanCode, scanRepo, saveScan, listScans, deleteScan, fixCode } from './api'
+import { scanCode, scanRepo, saveScan, listScans, deleteScan, fixCode, fixRepoFile } from './api'
 import type { ScanReport, Severity, AuthResponse, ScanRecordResponse } from './types'
 import HistoryPanel from './HistoryPanel'
 import Landing from './Landing'
 import DiffView from './DiffView'
+import { makeZip } from './zip'
 
 const SAMPLE = `// SecurityConfig.java + application.properties (sample)
 http
@@ -54,6 +55,11 @@ export default function App() {
   const [fixedCode, setFixedCode] = useState<string | null>(null)
   const [fixing, setFixing] = useState(false)
   const [fixMsg, setFixMsg] = useState<string | null>(null)
+  const [repoFixes, setRepoFixes] = useState<Record<string, { original: string; fixedCode: string }>>({})
+  const [fixingPath, setFixingPath] = useState<string | null>(null)
+  const [repoFixMsg, setRepoFixMsg] = useState<string | null>(null)
+  const [fixingAll, setFixingAll] = useState(false)
+  const [accepted, setAccepted] = useState<Record<string, boolean>>({})
 
   const analyzed = report && report.status === 'ANALYZED'
   const aiFindings = report ? report.findings.filter((f) => f.source === 'AI') : []
@@ -102,6 +108,8 @@ export default function App() {
   function beforeScan() {
     setLoading(true); setError(null); setReport(null); setSaved(false); setSaveMsg(null)
     setFixedCode(null); setFixMsg(null)
+    setRepoFixes({}); setRepoFixMsg(null); setFixingPath(null)
+    setFixingAll(false); setAccepted({})
   }
 
   async function runScan() {
@@ -158,6 +166,47 @@ export default function App() {
 
   function applyFix() {
     if (fixedCode) { setCode(fixedCode); setFixedCode(null); setReport(null); setFixMsg(null) }
+  }
+
+  async function fixAllRepoFiles(paths: string[]) {
+    setRepoFixMsg(null); setFixingAll(true)
+    for (const path of paths) {
+      if (repoFixes[path]) continue
+      setFixingPath(path)
+      try {
+        const res = await fixRepoFile(repoUrl, repoToken, repoBranch, path)
+        if (res.status === 'OK' && res.original && res.fixedCode) {
+          const original = res.original, fixedCode = res.fixedCode
+          setRepoFixes((prev) => ({ ...prev, [path]: { original, fixedCode } }))
+        } else if (res.status === 'AI_OFF') {
+          setRepoFixMsg(res.message || 'AI auto-fix is unavailable right now.')
+          break
+        } else {
+          setRepoFixMsg(res.message || `Could not fix ${path}.`)
+        }
+      } catch {
+        setRepoFixMsg("Couldn't reach the fixer for some files. Please try again.")
+      }
+    }
+    setFixingPath(null); setFixingAll(false)
+  }
+
+  function acceptFix(path: string) {
+    setAccepted((prev) => ({ ...prev, [path]: true }))
+  }
+
+  function downloadAccepted() {
+    const files = Object.entries(repoFixes)
+      .filter(([path]) => accepted[path])
+      .map(([path, v]) => ({ path, content: v.fixedCode }))
+    if (files.length === 0) return
+    const blob = makeZip(files)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'springguard-fixes.zip'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function buildReportMarkdown(r: ScanReport): string {
@@ -267,6 +316,12 @@ export default function App() {
   if (showLanding) {
     return <Landing onAuth={onAuth} onGuest={() => setGuest(true)} />
   }
+
+  const repoFiles: string[] =
+    report && reportMode === 'repo'
+      ? Array.from(new Set(report.findings.map((f) => f.file).filter((x): x is string => !!x)))
+      : []
+  const acceptedCount = Object.values(accepted).filter(Boolean).length
 
   return (
     <div className="app">
@@ -413,6 +468,12 @@ export default function App() {
                       {fixing ? 'Fixing…' : 'Fix with AI'}
                     </button>
                   </div>
+                  <div className="fix-resolving">
+                    <span className="fix-resolving-label">Resolving</span>
+                    {report.findings.map((f, i) => (
+                      <span key={i} className={`fix-issue is-${String(f.severity).toLowerCase()}`}>{f.title}</span>
+                    ))}
+                  </div>
                   {fixMsg && <div className="notice">{fixMsg}</div>}
                   {fixedCode && (
                     <>
@@ -423,6 +484,56 @@ export default function App() {
                       </div>
                     </>
                   )}
+                </div>
+              )}
+
+              {reportMode === 'repo' && repoFiles.length > 0 && (
+                <div className="fixpanel">
+                  <div className="fixpanel-head">
+                    <div>
+                      <div className="cardlabel ai">AI auto-fix</div>
+                      <div className="fixpanel-sub">Generate AI fixes for the flagged files, review each diff, then accept the ones you want and download them.</div>
+                    </div>
+                    {Object.keys(repoFixes).length === 0 ? (
+                      <button className="scan-btn fixbtn" onClick={() => fixAllRepoFiles(repoFiles)} disabled={fixingAll}>
+                        {fixingAll ? 'Fixing…' : 'Fix with AI'}
+                      </button>
+                    ) : (
+                      acceptedCount > 0 && (
+                        <button className="scan-btn fixbtn" onClick={downloadAccepted}>
+                          Download accepted ({acceptedCount}) as ZIP
+                        </button>
+                      )
+                    )}
+                  </div>
+                  {repoFixMsg && <div className="notice">{repoFixMsg}</div>}
+                  <div className="fixfiles">
+                    {repoFiles.map((path) => (
+                      <div key={path} className="fixfile">
+                        <div className="fixfile-row">
+                          <span className="fixfile-path">{path}</span>
+                          {accepted[path] ? (
+                            <span className="fixfile-done">Accepted ✓</span>
+                          ) : repoFixes[path] ? (
+                            <button className="savebtn accept" onClick={() => acceptFix(path)}>Accept changes</button>
+                          ) : fixingPath === path ? (
+                            <span className="fixfile-pending">Fixing…</span>
+                          ) : fixingAll ? (
+                            <span className="fixfile-pending">Queued…</span>
+                          ) : null}
+                        </div>
+                        <div className="fix-resolving">
+                          <span className="fix-resolving-label">Resolving</span>
+                          {report.findings.filter((f) => f.file === path).map((f, i) => (
+                            <span key={i} className={`fix-issue is-${String(f.severity).toLowerCase()}`}>{f.title}</span>
+                          ))}
+                        </div>
+                        {repoFixes[path] && (
+                          <DiffView original={repoFixes[path].original} fixed={repoFixes[path].fixedCode} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

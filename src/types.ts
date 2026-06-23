@@ -40,3 +40,11 @@ export interface FixResponse {
   message: string | null
   fixedCode: string | null
 }
+
+export interface RepoFileFixResponse {
+  status: 'OK' | 'AI_OFF' | 'ERROR'
+  message: string | null
+  path: string
+  original: string | null
+  fixedCode: string | null
+}
