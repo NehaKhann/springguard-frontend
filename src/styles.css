@@ -258,8 +258,23 @@ button { font-family: inherit; }
   color: var(--mute); font-family: 'JetBrains Mono', monospace; font-size: 12px;
 }
 
-/* ---------------- Landing ---------------- */
-.landing {
+/* Auth panel (used inside landing) */
+.authpanel { display: flex; flex-direction: column; gap: 10px; }
+.authtabs { display: flex; gap: 8px; margin-bottom: 4px; }
+.authtabs button {
+  flex: 1; background: transparent; border: 1px solid var(--line-strong); color: var(--mute);
+  border-radius: 10px; padding: 10px; cursor: pointer; font-size: 13.5px; font-weight: 500; transition: .15s;
+}
+.authtabs button.on { color: var(--ink); border-color: var(--accent); background: rgba(91,141,239,0.10); }
+.authsubmit {
+  border: none; border-radius: 10px; background: linear-gradient(180deg, #6E9BF2, var(--accent));
+  color: #fff; font-weight: 600; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 2px;
+}
+.authsubmit:disabled { opacity: 0.5; cursor: not-allowed; }
+.autherror { color: var(--amber); font-size: 13px; }
+
+/* ---------------- Landing marketing sections ---------------- */
+.landing-top {
   min-height: 100vh; display: grid; place-items: center; padding: 40px 24px;
   background:
     radial-gradient(70% 55% at 12% -5%, rgba(124,91,239,0.13), transparent 60%),
@@ -275,6 +290,7 @@ button { font-family: inherit; }
 .landing-title { font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 16px; }
 @media (max-width: 840px) { .landing-title { font-size: 30px; } }
 .landing-sub { color: var(--mute); font-size: 16px; line-height: 1.6; margin: 0 0 28px; max-width: 46ch; }
+.landing-sub strong { color: var(--ink); }
 .landing-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .landing-points li { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--ink-dim); }
 .landing-points .chip {
@@ -298,20 +314,124 @@ button { font-family: inherit; }
 .guestlink:hover { text-decoration: underline; }
 .landing-fineprint { color: var(--mute); font-size: 12.5px; margin: 14px 0 0; line-height: 1.5; }
 
-/* Auth panel (used inside landing) */
-.authpanel { display: flex; flex-direction: column; gap: 10px; }
-.authtabs { display: flex; gap: 8px; margin-bottom: 4px; }
-.authtabs button {
-  flex: 1; background: transparent; border: 1px solid var(--line-strong); color: var(--mute);
-  border-radius: 10px; padding: 10px; cursor: pointer; font-size: 13.5px; font-weight: 500; transition: .15s;
+/* Section container */
+.landing-section {
+  max-width: 1000px; margin: 0 auto; padding: 80px 24px;
 }
-.authtabs button.on { color: var(--ink); border-color: var(--accent); background: rgba(91,141,239,0.10); }
-.authsubmit {
-  border: none; border-radius: 10px; background: linear-gradient(180deg, #6E9BF2, var(--accent));
-  color: #fff; font-weight: 600; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 2px;
+.landing-section-alt {
+  background:
+    radial-gradient(70% 65% at 0% 50%, rgba(124,91,239,0.04), transparent 60%),
+    radial-gradient(60% 55% at 100% 60%, rgba(91,141,239,0.04), transparent 55%);
+  max-width: none;
 }
-.authsubmit:disabled { opacity: 0.5; cursor: not-allowed; }
-.autherror { color: var(--amber); font-size: 13px; }
+.section-title {
+  font-size: 32px; font-weight: 800; letter-spacing: -0.03em; text-align: center;
+  margin: 0 0 14px;
+}
+@media (max-width: 640px) { .section-title { font-size: 26px; } }
+.section-sub {
+  color: var(--mute); font-size: 16px; line-height: 1.6; text-align: center;
+  max-width: 600px; margin: 0 auto 44px;
+}
+.section-sub em { color: var(--ink-dim); font-style: normal; }
+
+/* How it works */
+.steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+}
+@media (max-width: 700px) { .steps { grid-template-columns: 1fr; gap: 24px; } }
+.step {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  border-radius: var(--radius); padding: 38px 24px 32px; position: relative;
+  box-shadow: var(--shadow-card); transition: border-color .2s;
+}
+.step:hover { border-color: rgba(124,91,239,0.4); }
+.step-num {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center;
+  box-shadow: 0 4px 14px -4px rgba(124,91,239,0.6);
+}
+.step-icon {
+  width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+  background: rgba(124,91,239,0.10); color: #b79cff; margin-bottom: 16px;
+}
+.step-title { font-size: 18px; font-weight: 700; margin: 0 0 10px; }
+.step-desc { color: var(--mute); font-size: 14px; line-height: 1.6; margin: 0; }
+
+/* Comparison table */
+.comparison-wrap { overflow-x: auto; }
+.comparison {
+  width: 100%; border-collapse: collapse; font-size: 14.5px;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  border-radius: var(--radius); overflow: hidden;
+}
+.comparison th, .comparison td {
+  padding: 14px 18px; text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.comparison th {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--mute); font-weight: 500;
+  background: var(--surface);
+}
+.comparison th:first-child, .comparison td:first-child {
+  padding-left: 22px;
+}
+.comparison th:last-child, .comparison td:last-child {
+  padding-right: 22px;
+}
+.comparison td { color: var(--ink-dim); }
+.comparison tbody tr:last-child td { border-bottom: none; }
+.col-guard { color: var(--accent) !important; font-weight: 600; }
+.check { color: var(--green); font-size: 16px; }
+.check.dim { color: var(--line-strong); opacity: 0.5; }
+.comp-feat { font-weight: 500; color: var(--ink) !important; }
+
+/* FAQ */
+.faq-list {
+  max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px;
+}
+.faq-item {
+  border: 1px solid var(--line-strong); border-radius: 14px;
+  background: var(--surface); overflow: hidden; transition: border-color .2s;
+}
+.faq-item:hover { border-color: rgba(124,91,239,0.3); }
+.faq-open { border-color: rgba(124,91,239,0.4); }
+.faq-q {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 22px; background: transparent; border: none; color: var(--ink);
+  font-size: 15px; font-weight: 600; cursor: pointer; text-align: left; gap: 16px;
+}
+.faq-chevron { font-size: 20px; color: var(--accent); flex-shrink: 0; }
+.faq-a {
+  padding: 0 22px 18px; color: var(--mute); font-size: 14px; line-height: 1.7;
+}
+
+/* Landing CTA bottom */
+.landing-cta { text-align: center; }
+.landing-cta-auth {
+  max-width: 380px; margin: 0 auto;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 18px; padding: 26px; box-shadow: var(--shadow-pop);
+}
+
+/* Landing footer */
+.landing-foot {
+  border-top: 1px solid var(--line); padding: 24px;
+}
+.landing-foot-inner {
+  max-width: 1000px; margin: 0 auto; display: flex;
+  align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.landing-foot-brand { display: flex; align-items: center; gap: 10px; }
+.landing-foot-brand .shield {
+  width: 28px; height: 28px; border-radius: 8px; font-size: 14px;
+}
+.landing-foot .brand-name { font-size: 16px; }
+.landing-foot-copy { color: var(--mute); font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
   .report, .finding { animation: none; }
